@@ -1,31 +1,35 @@
 // src/components/SummaryCards.js
 import React from "react";
+import "./SummaryCards.css";
 
 export default function SummaryCards({ summary }) {
   if (!summary) return null;
-  const { total_count, averages } = summary;
 
-  const fmt = (v) =>
-    v === null || v === undefined ? "–" : Number(v).toFixed(2);
+  const total = summary.total_count || 0;
+  const av = summary.averages || {};
+
+  const cards = [
+    { label: "Total Rows", value: total, color: "#FFF58A" },
+    { label: "Avg Flowrate", value: av.Flowrate?.toFixed?.(2) ?? av.Flowrate, color: "#FFBBE1" },
+    { label: "Avg Pressure", value: av.Pressure?.toFixed?.(2) ?? av.Pressure, color: "#DD7BDF" },
+    { label: "Avg Temperature", value: av.Temperature?.toFixed?.(2) ?? av.Temperature, color: "#B3BFFF" },
+  ];
 
   return (
-    <div className="grid">
-      <div className="kpi">
-        <div className="kpi-label">Total Rows</div>
-        <div className="kpi-value">{total_count ?? "–"}</div>
+    <section className="summary-section">
+      <h3 className="summary-title">Dataset Summary</h3>
+      <div className="summary-grid">
+        {cards.map((c) => (
+          <div
+            key={c.label}
+            className="summary-card"
+            style={{ "--accent": c.color }}
+          >
+            <div className="summary-label">{c.label}</div>
+            <div className="summary-value">{c.value ?? "—"}</div>
+          </div>
+        ))}
       </div>
-      <div className="kpi">
-        <div className="kpi-label">Avg Flowrate</div>
-        <div className="kpi-value">{fmt(averages?.Flowrate)}</div>
-      </div>
-      <div className="kpi">
-        <div className="kpi-label">Avg Pressure</div>
-        <div className="kpi-value">{fmt(averages?.Pressure)}</div>
-      </div>
-      <div className="kpi">
-        <div className="kpi-label">Avg Temperature</div>
-        <div className="kpi-value">{fmt(averages?.Temperature)}</div>
-      </div>
-    </div>
+    </section>
   );
 }

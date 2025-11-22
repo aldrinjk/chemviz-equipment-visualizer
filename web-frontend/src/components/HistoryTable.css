@@ -1,0 +1,70 @@
+.history-section {
+  margin-top: 24px;
+}
+
+.history-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #e5e7eb;
+}
+
+.history-empty {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px dashed rgba(148, 163, 184, 0.5);
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.history-table-wrapper {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: radial-gradient(circle at top left, #b3bfff1a, #020617 70%);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(18px);
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.history-table thead {
+  background: linear-gradient(90deg, #dd7bdf33, #b3bfff33);
+}
+
+.history-table th,
+.history-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(30, 41, 59, 0.85);
+  color: #e5e7eb;
+}
+
+.history-table th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #9ca3af;
+}
+
+.history-table tbody tr:nth-child(even) {
+  background-color: rgba(15, 23, 42, 0.7);
+}
+
+.history-table tbody tr:nth-child(odd) {
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+.history-table tbody tr:hover {
+  background: linear-gradient(90deg, #fff58a22, #ffbbe122);
+}
+
+.history-filename {
+  font-weight: 500;
+  color: #f9fafb;
+}

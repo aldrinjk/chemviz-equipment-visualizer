@@ -1,49 +1,48 @@
 // src/components/TypeBarChart.js
-import React, { useMemo } from "react";
-import { Bar } from "react-chartjs-2";
+import React from "react";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
   Tooltip,
-  Legend,
-} from "chart.js";
+  ResponsiveContainer,
+  CartesianGrid,
+  Cell,
+} from "recharts";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+const COLORS = ["#FFF58A", "#FFBBE1", "#DD7BDF", "#B3BFFF"];
 
 export default function TypeBarChart({ distribution }) {
-  const labels = useMemo(() => Object.keys(distribution || {}), [distribution]);
-  const values = useMemo(() => Object.values(distribution || {}), [distribution]);
+  const data = Object.entries(distribution || {}).map(([name, value]) => ({
+    name,
+    count: value,
+  }));
 
-  if (!labels.length) return null;
-
-  const data = {
-    labels,
-    datasets: [
-  {
-    label: "Count",
-    data: values,
-    backgroundColor: "rgba(56, 189, 248, 0.8)",  // bright cyan
-    borderColor: "rgba(56, 189, 248, 1)",        // border color
-    borderWidth: 2,
-    hoverBackgroundColor: "rgba(96, 226, 255, 1)", // brighter on hover
-  },
-],
-  };
-
-  const options = {
-    responsive: true,
-    plugins: { legend: { display: false } },
-    scales: {
-      y: { beginAtZero: true, ticks: { precision: 0 } },
-    },
-  };
+  if (!data.length) {
+    return <div className="muted">No type data available.</div>;
+  }
 
   return (
-    <div className="card">
-      <h3>Type Distribution</h3>
-      <Bar data={data} options={options} />
-    </div>
+    <ResponsiveContainer width="100%" height={220}>
+      <BarChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(179,191,255,0.25)" />
+        <XAxis dataKey="name" stroke="#9CA3AF" />
+        <YAxis stroke="#9CA3AF" />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "#020617",
+            borderRadius: 10,
+            border: "1px solid rgba(179,191,255,0.5)",
+            fontSize: 12,
+          }}
+        />
+        <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+          {data.map((entry, index) => (
+            <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
   );
 }

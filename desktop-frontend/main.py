@@ -1,12 +1,14 @@
+# desktop-frontend/main.py
 import sys
 import requests
+
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
-    QPushButton,
     QLabel,
+    QPushButton,
     QFileDialog,
     QMessageBox,
     QTableWidget,
@@ -14,12 +16,15 @@ from PyQt5.QtWidgets import (
     QInputDialog,
     QLineEdit,
     QGroupBox,
+    QTabWidget,
+    QHeaderView,
 )
 from PyQt5.QtCore import Qt
+
 import matplotlib
 
 matplotlib.use("Qt5Agg")
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # noqa: E402
 
 API_BASE = "http://127.0.0.1:8000/api"
 
@@ -28,159 +33,246 @@ class App(QWidget):
     def __init__(self):
         super().__init__()
 
-        # ---- Global style ----
+        # --- global style (roughly matching your web theme) ---
         self.setStyleSheet(
             """
-        QWidget {
-            background-color: #020617;
-            color: #e5e7eb;
-            font-family: Segoe UI, system-ui, sans-serif;
-            font-size: 12px;
-        }
-        QGroupBox {
-            border: 1px solid #1f2933;
-            border-radius: 10px;
-            margin-top: 16px;
-            padding: 12px;
-            background-color: #050816;
-        }
-        QGroupBox::title {
-            subcontrol-origin: margin;
-            left: 10px;
-            padding: 0 4px;
-            color: #9ca3af;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-        }
-        QPushButton {
-            border-radius: 18px;
-            padding: 6px 14px;
-            color: white;
-            background-color: qlineargradient(
-                x1:0, y1:0, x2:1, y2:1,
-                stop:0 #2563eb,
-                stop:1 #38bdf8
-            );
-        }
-        QPushButton:hover {
-            background-color: #3b82f6;
-        }
-        QPushButton:pressed {
-            background-color: #1d4ed8;
-        }
-        QTableWidget {
-            gridline-color: #1f2933;
-            selection-background-color: #1d4ed8;
-            selection-color: white;
-            background-color: #020617;
-            alternate-background-color: #020b29;
-        }
-        QHeaderView::section {
-            background-color: #020b29;
-            color: #9ca3af;
-            padding: 4px;
-            border: none;
-            border-bottom: 1px solid #1f2933;
-        }
-        """
+            QWidget {
+                background-color: #020617;
+                color: #e5e7eb;
+                font-family: Segoe UI, system-ui, sans-serif;
+                font-size: 12px;
+            }
+            QLabel#TitleLabel {
+                font-size: 18px;
+                font-weight: 600;
+            }
+            QLabel#SubtitleLabel {
+                color: #9ca3af;
+                font-size: 11px;
+            }
+            QPushButton {
+                border-radius: 18px;
+                padding: 6px 16px;
+                color: #020617;
+                background-color: #FFF58A; /* soft yellow */
+                border: none;
+                font-weight: 500;
+            }
+            QPushButton:hover {
+                background-color: #ffe769;
+            }
+            QPushButton:pressed {
+                background-color: #e6d259;
+            }
+            QPushButton#GhostButton {
+                background-color: transparent;
+                color: #e5e7eb;
+                border: 1px solid #4b5563;
+            }
+            QPushButton#GhostButton:hover {
+                background-color: #111827;
+            }
+            QGroupBox {
+                border: 1px solid #111827;
+                border-radius: 14px;
+                margin-top: 10px;
+                padding: 10px 12px 12px 12px;
+                background-color: #020617;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 12px;
+                padding: 0 4px;
+                color: #9ca3af;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+            }
+            QTabWidget::pane {
+                border-top: 1px solid #111827;
+                margin-top: 6px;
+            }
+            QTabBar::tab {
+                background: transparent;
+                color: #9ca3af;
+                border: none;
+                padding: 6px 14px;
+                margin-right: 4px;
+            }
+            QTabBar::tab:selected {
+                color: #e5e7eb;
+                border-bottom: 2px solid #FFBBE1; /* pink accent */
+            }
+            QTableWidget {
+                gridline-color: #1f2933;
+                selection-background-color: #1d4ed8;
+                selection-color: white;
+                background-color: #020617;
+                alternate-background-color: #020b29;
+            }
+            QHeaderView::section {
+                background-color: #020b29;
+                color: #9ca3af;
+                padding: 4px;
+                border: none;
+                border-bottom: 1px solid #1f2933;
+            }
+            """
         )
 
         self.setWindowTitle("Chemical Equipment Parameter Visualizer (Desktop)")
-        self.resize(900, 600)
+        self.resize(960, 620)
 
-        # ---- Main layout ----
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-
-        # Header label
-        title = QLabel("Chemical Equipment Parameter Visualizer (Desktop)")
-        title.setStyleSheet(
-            "font-size: 16px; font-weight: 600; margin-bottom: 4px;"
-        )
-        subtitle = QLabel(f"API: {API_BASE}")
-        subtitle.setStyleSheet(
-            "color: #9ca3af; font-size: 11px; margin-bottom: 8px;"
-        )
-
-        self.layout.addWidget(title)
-        self.layout.addWidget(subtitle)
-
-        # Store auth token
+        # --- auth state ---
         self.auth_token = None
+        self.auth_user = None
 
-        # ---- Controls / buttons ----
+        # === ROOT LAYOUT ===
+        root = QVBoxLayout()
+        root.setContentsMargins(16, 16, 16, 16)
+        root.setSpacing(12)
+        self.setLayout(root)
+
+        # === HEADER / NAVBAR ===
+        header = QHBoxLayout()
+
+        title_box = QVBoxLayout()
+        self.title_label = QLabel("Chemical Equipment Parameter Visualizer")
+        self.title_label.setObjectName("TitleLabel")
+        self.subtitle_label = QLabel(f"API: {API_BASE}")
+        self.subtitle_label.setObjectName("SubtitleLabel")
+
+        title_box.addWidget(self.title_label)
+        title_box.addWidget(self.subtitle_label)
+
+        header.addLayout(title_box)
+        header.addStretch()
+
+        # right side: "Logged in as" + login/logout button
+        self.user_label = QLabel("Logged out")
+        self.login_btn = QPushButton("Login")
+        self.login_btn.setObjectName("GhostButton")
+        self.login_btn.clicked.connect(self.handle_auth_button)
+
+        header.addWidget(self.user_label)
+        header.addSpacing(8)
+        header.addWidget(self.login_btn)
+
+        root.addLayout(header)
+
+        # === TABS ===
+        self.tabs = QTabWidget()
+        root.addWidget(self.tabs)
+
+        # ---------- OVERVIEW TAB ----------
+        overview = QWidget()
+        ov_layout = QVBoxLayout()
+        ov_layout.setSpacing(10)
+        overview.setLayout(ov_layout)
+
+        # top buttons row for overview
+        btn_row = QHBoxLayout()
         self.btn_upload = QPushButton("Upload CSV")
-        self.btn_latest = QPushButton("Refresh Latest Summary")
-        self.btn_history = QPushButton("Load History (Last 5)")
+        self.btn_refresh = QPushButton("Refresh Latest Summary")
         self.btn_pdf = QPushButton("Download Latest PDF")
-        self.btn_login = QPushButton("Login")
 
-        # ---- Summary label ----
-        self.summary_label = QLabel("No summary loaded.")
+        btn_row.addWidget(self.btn_upload)
+        btn_row.addWidget(self.btn_refresh)
+        btn_row.addWidget(self.btn_pdf)
+        btn_row.addStretch()
+        ov_layout.addLayout(btn_row)
+
+        # summary group
+        self.summary_group = QGroupBox("Dataset Summary")
+        sg_layout = QVBoxLayout()
+        self.summary_label = QLabel("No summary loaded yet. Upload a CSV or refresh latest.")
         self.summary_label.setWordWrap(True)
+        sg_layout.addWidget(self.summary_label)
 
-        # ---- History table ----
-        self.table = QTableWidget(0, 3)
-        self.table.setHorizontalHeaderLabels(
-            ["Filename", "Uploaded At", "Total Rows"]
+        tip = QLabel(
+            "Tip: After loading a dataset, a bar chart for Equipment Type Distribution will pop up."
         )
+        tip.setStyleSheet("color: #9ca3af; font-size: 11px;")
+        sg_layout.addWidget(tip)
 
-        # ---- Group: Upload & Controls ----
-        upload_group = QGroupBox("Upload & Controls")
-        upload_layout = QHBoxLayout()
-        upload_group.setLayout(upload_layout)
+        self.summary_group.setLayout(sg_layout)
+        ov_layout.addWidget(self.summary_group)
 
-        upload_layout.addWidget(self.btn_upload)
-        upload_layout.addWidget(self.btn_latest)
-        upload_layout.addWidget(self.btn_history)
-        upload_layout.addWidget(self.btn_pdf)
-        upload_layout.addStretch()
-        upload_layout.addWidget(self.btn_login)
+        self.tabs.addTab(overview, "Overview")
 
-        self.layout.addWidget(upload_group)
+        # ---------- HISTORY TAB ----------
+        history_tab = QWidget()
+        h_layout = QVBoxLayout()
+        h_layout.setSpacing(10)
+        history_tab.setLayout(h_layout)
 
-        # ---- Group: Latest Dataset ----
-        summary_group = QGroupBox("Latest Dataset")
-        summary_layout = QVBoxLayout()
-        summary_group.setLayout(summary_layout)
-        summary_layout.addWidget(self.summary_label)
+        h_btn_row = QHBoxLayout()
+        self.btn_history = QPushButton("Load Last 5 Uploads")
+        h_btn_row.addWidget(self.btn_history)
+        h_btn_row.addStretch()
+        h_layout.addLayout(h_btn_row)
 
-        self.layout.addWidget(summary_group)
+        self.table = QTableWidget(0, 3)
+        self.table.setHorizontalHeaderLabels(["Filename", "Uploaded At", "Total Rows"])
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
 
-        # ---- Group: Upload History ----
-        history_group = QGroupBox("Upload History (Last 5)")
-        history_layout = QVBoxLayout()
-        history_group.setLayout(history_layout)
-        history_layout.addWidget(self.table)
+        history_group = QGroupBox("Last 5 Uploads")
+        hg_layout = QVBoxLayout()
+        hg_layout.addWidget(self.table)
+        history_group.setLayout(hg_layout)
+        h_layout.addWidget(history_group)
 
-        self.layout.addWidget(history_group)
+        self.tabs.addTab(history_tab, "Upload History")
 
-        # Optional: keep info label if you want (not added to layout)
-        self.info = QLabel(f"API: {API_BASE}")
-        self.info.setStyleSheet("color: gray;")
-
-        # ---- Hook up actions ----
+        # === SIGNALS ===
         self.btn_upload.clicked.connect(self.upload_csv)
-        self.btn_latest.clicked.connect(self.load_latest)
+        self.btn_refresh.clicked.connect(self.load_latest)
         self.btn_history.clicked.connect(self.load_history)
         self.btn_pdf.clicked.connect(self.download_pdf)
-        self.btn_login.clicked.connect(self.login_user)
 
-    # ----------------- Helpers -----------------
+    # ======================== HELPERS ========================
 
     def alert(self, title, message):
         QMessageBox.information(self, title, message)
 
-    # ---------- Auth ----------
+    def _auth_headers(self):
+        headers = {}
+        if self.auth_token:
+            headers["Authorization"] = f"Token {self.auth_token}"
+        return headers
 
-    def login_user(self):
-        # Ask for username
+    def _ensure_logged_in(self):
+        """Return True if logged in, otherwise show a message and return False."""
+        if not self.auth_token:
+            self.alert("Login required", "Please log in first to use this feature.")
+            return False
+        return True
+
+    # ======================== AUTH ========================
+
+    def handle_auth_button(self):
+        """Login if logged out; logout if logged in."""
+        if self.auth_token:
+            # logout
+            try:
+                requests.post(f"{API_BASE}/auth/logout/", headers=self._auth_headers())
+            except Exception:
+                pass  # ignore errors
+
+            self.auth_token = None
+            self.auth_user = None
+            self.user_label.setText("Logged out")
+            self.login_btn.setText("Login")
+            self.alert("Logged out", "You have been logged out.")
+            return
+
+        # otherwise login
         username, ok = QInputDialog.getText(self, "Login", "Username:")
         if not ok or not username:
             return
 
-        # Ask for password (masked)
         password, ok = QInputDialog.getText(
             self, "Login", "Password:", QLineEdit.Password
         )
@@ -192,24 +284,22 @@ class App(QWidget):
                 f"{API_BASE}/auth/login/",
                 json={"username": username, "password": password},
             )
-            if resp.status_code >= 400:
-                raise RuntimeError(resp.text)
+            resp.raise_for_status()
             data = resp.json()
             self.auth_token = data.get("token")
-            self.alert("Login", f"Logged in as {data.get('username')}")
+            self.auth_user = data.get("username")
+            self.user_label.setText(f"Logged in as <b>{self.auth_user}</b>")
+            self.login_btn.setText("Log out")
+            self.alert("Login", f"Logged in as {self.auth_user}")
         except Exception as e:
-            self.alert("Error", str(e))
+            self.alert("Error", f"Login failed: {e}")
 
-    def _auth_headers(self):
-        """Helper to add Authorization header if logged in."""
-        headers = {}
-        if self.auth_token:
-            headers["Authorization"] = f"Token {self.auth_token}"
-        return headers
-
-    # ---------- API Calls ----------
+    # ======================== API CALLS ========================
 
     def upload_csv(self):
+        if not self._ensure_logged_in():
+            return
+
         path, _ = QFileDialog.getOpenFileName(
             self, "Choose CSV", filter="CSV Files (*.csv)"
         )
@@ -217,10 +307,9 @@ class App(QWidget):
             return
 
         try:
-            headers = self._auth_headers()
             with open(path, "rb") as f:
                 resp = requests.post(
-                    f"{API_BASE}/upload/", files={"file": f}, headers=headers
+                    f"{API_BASE}/upload/", files={"file": f}, headers=self._auth_headers()
                 )
 
             if resp.status_code >= 400:
@@ -233,11 +322,17 @@ class App(QWidget):
             self.alert("Error", str(e))
 
     def load_latest(self):
-        # summary/latest is public
+        if not self._ensure_logged_in():
+            return
+
         try:
-            resp = requests.get(f"{API_BASE}/summary/latest/")
+            resp = requests.get(
+                f"{API_BASE}/summary/latest/", headers=self._auth_headers()
+            )
             if resp.status_code == 404:
-                self.summary_label.setText("No datasets yet. Upload a CSV first.")
+                self.summary_label.setText(
+                    "No datasets yet. Upload a CSV first."
+                )
                 return
             resp.raise_for_status()
             self.render_summary(resp.json())
@@ -245,9 +340,11 @@ class App(QWidget):
             self.alert("Error", str(e))
 
     def load_history(self):
-        # history is public too
+        if not self._ensure_logged_in():
+            return
+
         try:
-            resp = requests.get(f"{API_BASE}/history/")
+            resp = requests.get(f"{API_BASE}/history/", headers=self._auth_headers())
             resp.raise_for_status()
             items = resp.json().get("items", [])
 
@@ -264,6 +361,9 @@ class App(QWidget):
             self.alert("Error", str(e))
 
     def download_pdf(self):
+        if not self._ensure_logged_in():
+            return
+
         save_path, _ = QFileDialog.getSaveFileName(
             self,
             "Save PDF Report As",
@@ -274,9 +374,10 @@ class App(QWidget):
             return
 
         try:
-            headers = self._auth_headers()
             resp = requests.get(
-                f"{API_BASE}/report/latest/", stream=True, headers=headers
+                f"{API_BASE}/report/latest/",
+                stream=True,
+                headers=self._auth_headers(),
             )
             resp.raise_for_status()
 
@@ -289,7 +390,7 @@ class App(QWidget):
         except Exception as e:
             self.alert("Error", str(e))
 
-    # ---------- UI Helpers ----------
+    # ======================== UI HELPERS ========================
 
     def render_summary(self, data):
         av = data.get("averages", {})
@@ -303,13 +404,13 @@ class App(QWidget):
         )
         self.summary_label.setText(text)
 
-        # Plot distribution
+        # show bar chart
         dist = data.get("type_distribution", {})
         if dist:
             labels = list(dist.keys())
             values = list(dist.values())
             plt.figure()
-            plt.bar(labels, values)
+            plt.bar(labels, values, color=["#FFF58A", "#FFBBE1", "#DD7BDF", "#B3BFFF"])
             plt.title("Equipment Type Distribution")
             plt.xlabel("Type")
             plt.ylabel("Count")

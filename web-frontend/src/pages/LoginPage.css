@@ -1,0 +1,112 @@
+/* Full-page center */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: radial-gradient(circle at top left, #b3bfff10 0, #020617 50%),
+              radial-gradient(circle at bottom right, #ffbbe110 0, #020617 40%);
+}
+
+/* Card size & look */
+.login-card {
+  width: 100%;
+  max-width: 380px;          /* << controls width (like your ref) */
+  padding: 24px 28px;
+  border-radius: 18px;
+
+  background: #020617;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  box-shadow:
+    0 20px 45px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(179, 191, 255, 0.2);
+
+  color: #f9fafb;
+}
+
+/* Header */
+.login-title {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.login-subtitle {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: rgba(249, 250, 251, 0.7);
+}
+
+/* Form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Inputs */
+.login-input {
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #020617;
+  color: #f9fafb;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s;
+}
+
+.login-input::placeholder {
+  color: rgba(249, 250, 251, 0.5);
+}
+
+.login-input:focus {
+  border-color: #dd7bdf;
+  box-shadow: 0 0 0 1px rgba(221, 123, 223, 0.4);
+  background: rgba(2, 6, 23, 0.95);
+}
+
+/* Error */
+.login-error {
+  font-size: 12px;
+  color: #ff5858;
+}
+
+/* Button using your palette: FFF58A FFBBE1 DD7BDF B3BFFF */
+.login-button {
+  margin-top: 6px;
+  height: 40px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+
+  color: #020617;
+  background: linear-gradient(90deg, #fff58a, #ffbbe1, #dd7bdf, #b3bfff);
+  background-size: 200% 100%;
+  transition: background-position 0.2s ease, transform 0.1s ease,
+              box-shadow 0.15s ease;
+  box-shadow: 0 10px 25px rgba(221, 123, 223, 0.35);
+}
+
+.login-button:hover {
+  background-position: 100% 0;
+  transform: translateY(-1px);
+}
+
+.login-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 5px 15px rgba(221, 123, 223, 0.25);
+}
+
+/* Footer link text */
+.login-footer {
+  margin-top: 12px;
+  font-size: 12px;
+  text-align: center;
+  color: rgba(249, 250, 251, 0.6);
+}

@@ -82,23 +82,24 @@ def upload_csv(request):
 
 
 @api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def summary_latest(request):
     ds = Dataset.objects.order_by('-uploaded_at').first()
     if not ds:
-        return Response(
-            {"detail": "No datasets yet."},
-            status=status.HTTP_404_NOT_FOUND,
-        )
+        return Response({"detail": "No datasets yet."}, status=status.HTTP_404_NOT_FOUND)
     data = {
         "dataset_id": ds.id,
         "filename": ds.name,
         "uploaded_at": ds.uploaded_at,
-        **ds.summary,
+        **ds.summary
     }
     return Response(data)
 
 
 @api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def history(request):
     qs = Dataset.objects.order_by('-uploaded_at')[:5]
     items = [{
@@ -108,7 +109,6 @@ def history(request):
         "summary": ds.summary,
     } for ds in qs]
     return Response({"items": items})
-
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
@@ -213,22 +213,19 @@ def logout_view(request):
 
 
 @api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def dataset_latest_rows(request):
     """
     Returns the first 50 rows of the latest dataset (raw CSV rows).
-    Uses the Dataset.raw_data JSON field.
     """
     ds = Dataset.objects.order_by('-uploaded_at').first()
     if not ds:
-        return Response(
-            {"detail": "No datasets yet."},
-            status=status.HTTP_404_NOT_FOUND,
-        )
+        return Response({"detail": "No datasets yet."}, status=404)
 
-    rows = getattr(ds, "raw_data", []) or []
-
+    rows = ds.raw_data or []
     return Response({
         "filename": ds.name,
-        "rows": rows[:50],  # first 50 rows only
-        "total_rows": len(rows),
+        "rows": rows[:50],
+        "total_rows": len(rows)
     })
